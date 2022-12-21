@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 import os
-
+import copy
 class Linear_QNet(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
         super().__init__()
@@ -29,7 +29,8 @@ class QTrainer:
         # init hyperparameters
         self.lr = lr
         self.gamma = gamma
-        self.model = model
+        self.policy = model
+        self.target = copy.deepcopy(self.policy)
         self.optimizer = optim.Adam(model.parameters(), lr=self.lr)
         self.criterion = nn.MSELoss()
 
@@ -39,7 +40,6 @@ class QTrainer:
         action = torch.tensor(action, dtype=torch.long)
         reward = torch.tensor(reward, dtype=torch.float)
         # (n, x)
-
         if len(state.shape) == 1:
             # (1, x)
             state = torch.unsqueeze(state, 0)
@@ -49,22 +49,20 @@ class QTrainer:
             done = (done, )
 
         # 1: predicted Q values with current state
-        pred = self.model(state)
+        Q_values = self.policy(state)
+        Q_targets = Q_values.clone()
 
-        target = pred.clone()
         for idx in range(len(done)):
-            Q_new = reward[idx]
-            if not done[idx]:
-                Q_new = reward[idx] + self.gamma * torch.max(self.model(next_state[idx]))
+            if done[idx]: 
+                Q_target = reward[idx]
+            else:
+                Q_target = reward[idx] + self.gamma * torch.max(self.target(next_state[idx]).detach())
 
-            target[idx][torch.argmax(action[idx]).item()] = Q_new
+            # what is this tensor ?? what is the 2nd index??
+            Q_targets[idx][torch.argmax(action[idx]).item()] = Q_target
     
-        # 2: Q_new = r + y * max(next_predicted Q value) -> only do this if not done
-        # pred.clone()
-        # preds[argmax(action)] = Q_new
         self.optimizer.zero_grad()
-        loss = self.criterion(target, pred)
+        loss = self.criterion(Q_targets, Q_values)
         loss.backward()
-
         self.optimizer.step()
 

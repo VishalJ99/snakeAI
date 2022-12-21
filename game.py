@@ -36,6 +36,7 @@ BLACK = (0,0,0)
 
 BLOCK_SIZE = 20
 SPEED = 20
+import time
 
 class SnakeGame:
     
@@ -50,8 +51,8 @@ class SnakeGame:
 
     def reset(self):
        # init game state
-       self.direction = Direction.UP
-       self.directions_array = [Direction.UP, Direction.RIGHT, Direction.DOWN, Direction.LEFT]
+       self.direction = Direction.RIGHT
+       self.directions_array = [Direction.RIGHT, Direction.DOWN, Direction.LEFT, Direction.UP]
        
        
        self.head = Point(self.w/2, self.h/2)
@@ -62,6 +63,7 @@ class SnakeGame:
        self.score = 0
        self.food = None
        self._place_food()
+       self.frame = 0
        
     
     def get_state(self):
@@ -77,10 +79,10 @@ class SnakeGame:
      pt = self._move(head_copy,self.direction)
      danger_straight = int(self._is_collision(pt))
      
-     pt = self._move(head_copy,np.roll(self.directions_array,1)[0])
+     pt = self._move(head_copy,np.roll(self.directions_array,-1)[0])
      danger_right = int(self._is_collision(pt))
 
-     pt = self._move(head_copy, np.roll(self.directions_array,-1)[0])
+     pt = self._move(head_copy, np.roll(self.directions_array,1)[0])
      danger_left = int(self._is_collision(pt))
 
      direction_up = 1 if self.direction == Direction.UP else 0
@@ -121,25 +123,18 @@ class SnakeGame:
          action_vector : array
           binary array determing movement of snake in current step eg [straight,right,left] 
         '''
-        
+        pygame.event.pump()
         # find direction specified by action vector
         if action_vector[1]:
-         self.directions_array = np.roll(self.directions_array,1)
-        elif action_vector[2]:
          self.directions_array = np.roll(self.directions_array,-1)
+        elif action_vector[2]:
+         self.directions_array = np.roll(self.directions_array,1)
         
         self.direction = self.directions_array[0]
         
         # 2. move
         self.head = self._move(self.head,self.direction) # update the head
         self.snake.insert(0, self.head)
-        
-        # 3. check if game over
-        game_over = False
-        if self._is_collision(self.head):
-            game_over = True
-            print('game over')
-            return game_over, self.score, self.reward
             
         # 4. place new food or just move
         if self.head == self.food:
@@ -148,11 +143,17 @@ class SnakeGame:
             self.reward = 10
         else:
             self.snake.pop()
-        
+        if self._is_collision(self.head) or self.frame > 100*len(self.snake):
+            game_over = True
+            return game_over, self.score, self.reward
         # 5. update ui and clock
         self._update_ui()
+        # time.sleep(5)
         self.clock.tick(SPEED)
+        self.frame+=1
+        
         # 6. return game over and score
+        game_over = False
         return game_over, self.score, self.reward
     
     def _is_collision(self, point):
