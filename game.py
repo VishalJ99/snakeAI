@@ -142,9 +142,11 @@ class SnakeGame:
             self._place_food()
             self.reward = 10
         else:
+            self.reward = 0
             self.snake.pop()
         if self._is_collision(self.head) or self.frame > 100*len(self.snake):
             game_over = True
+            self.reward = -10
             return game_over, self.score, self.reward
         # 5. update ui and clock
         self._update_ui()
@@ -159,14 +161,11 @@ class SnakeGame:
     def _is_collision(self, point):
         # hits boundary
         if point.x > self.w - BLOCK_SIZE or point.x < 0 or point.y > self.h - BLOCK_SIZE or point.y < 0:
-            self.reward = -10
             return True
         # hits itself
         if point in self.snake[1:]:
-            self.reward = -10
             return True
         
-        self.reward = 0
         return False
         
     def _update_ui(self):
