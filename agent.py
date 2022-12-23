@@ -80,11 +80,11 @@ class Agent():
 				self.trainer.train_step(curr_state,action,reward,new_state,done)
 				frame+=1
     
-				if len(self.replay_stack) > BATCHSIZE:
-					# randomly sample from replay stack
-					batch = random.sample(self.replay_stack,BATCHSIZE)
-					curr_states, actions, rewards, new_states, dones = zip(*batch)
-					self.trainer.train_step(curr_states, actions, rewards, new_states, dones)
+			if len(self.replay_stack) > BATCHSIZE:
+				# randomly sample from replay stack
+				batch = random.sample(self.replay_stack,BATCHSIZE)
+				curr_states, actions, rewards, new_states, dones = zip(*batch)
+				self.trainer.train_step(curr_states, actions, rewards, new_states, dones)
 
    			# plot data
 			plot_scores.append(score)
