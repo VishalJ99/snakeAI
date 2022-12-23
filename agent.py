@@ -52,9 +52,9 @@ class Agent():
 				print('current episode:',episode,' total_frames:',total_frames, ' exploration rate:', self.exploration_rate, ' best score:',record,' avg score:',total_score/episode)
     
    # every 1000 frames copy weights from policy to target models
-			if (total_frames % 1000)<200:
-				print('updating target network') 
-				self.trainer.target.load_state_dict(self.trainer.policy.state_dict())
+			# if (total_frames % 1000)<200:
+			# 	print('updating target network') 
+			# 	self.trainer.target.load_state_dict(self.trainer.policy.state_dict())
 				
 			frame = 0
 			while done != True:
@@ -65,7 +65,7 @@ class Agent():
 				if exploration_threshold > self.exploration_rate:
 					# using model
 					curr_state_tensor = torch.tensor(curr_state, dtype=torch.float)
-					action_idx = torch.argmax(self.trainer.policy(torch.unsqueeze(curr_state_tensor, 0)))
+					action_idx = torch.argmax(self.trainer.model(torch.unsqueeze(curr_state_tensor, 0)))
 				else:
 					# randomly 
 					action_idx = random.randint(0,2)
@@ -76,8 +76,8 @@ class Agent():
 				done, score, reward = self.game.play_step(action)
 				new_state = self.game.get_state()
 				experience_tuple = (curr_state, action, reward, new_state, done)
-				if frame==0 and done: print(experience_tuple)
 				self.replay_stack.appendleft(experience_tuple)
+				self.trainer.train_step(curr_state,action,reward,new_state,done)
 				frame+=1
     
 				if len(self.replay_stack) > BATCHSIZE:
@@ -86,19 +86,19 @@ class Agent():
 					curr_states, actions, rewards, new_states, dones = zip(*batch)
 					self.trainer.train_step(curr_states, actions, rewards, new_states, dones)
 
-   # plot data
+   			# plot data
 			plot_scores.append(score)
 			total_score += score
 			mean_score = total_score / (episode + 1)
 			plot_mean_scores.append(mean_score)
 			plot(plot_scores, plot_mean_scores)
 			
-   # decay exploration rate
+   			# decay exploration rate
 			self.exploration_rate = self.min_exploration_rate + (self.max_exploration_rate - self.min_exploration_rate)*np.exp(-(self.exploration_decay_rate*episode))
 
 			if score>record:
 				record = score 
-				self.trainer.policy.save()
+				self.trainer.model.save()
 
 
 

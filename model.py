@@ -29,8 +29,7 @@ class QTrainer:
         # init hyperparameters
         self.lr = lr
         self.gamma = gamma
-        self.policy = model
-        self.target = copy.deepcopy(self.policy)
+        self.model = model
         self.optimizer = optim.Adam(model.parameters(), lr=self.lr)
         self.criterion = nn.MSELoss()
 
@@ -49,14 +48,14 @@ class QTrainer:
             done = (done, )
 
         # 1: predicted Q values with current state
-        Q_values = self.policy(state)
+        Q_values = self.model(state)
         Q_targets = Q_values.clone()
 
         for idx in range(len(done)):
             if done[idx]: 
                 Q_target = reward[idx]
             else:
-                Q_target = reward[idx] + self.gamma * torch.max(self.target(next_state[idx]).detach())
+                Q_target = reward[idx] + self.gamma * torch.max(self.model(next_state[idx]).detach())
 
             # what is this tensor ?? what is the 2nd index??
             Q_targets[idx][torch.argmax(action[idx]).item()] = Q_target
