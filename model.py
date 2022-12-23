@@ -58,7 +58,6 @@ class QTrainer:
             else:
                 Q_target = reward[idx] + self.gamma * torch.max(self.target(next_state[idx]).detach())
 
-            # what is this tensor ?? what is the 2nd index??
             Q_targets[idx][torch.argmax(action[idx]).item()] = Q_target
     
         self.optimizer.zero_grad()
