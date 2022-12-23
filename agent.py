@@ -11,10 +11,9 @@ from model import Linear_QNet, QTrainer
 import torch
 import matplotlib.pyplot as plt
 from IPython import display
-# hyper params taken from ...
+
 MAXMEM = 10000
 BATCHSIZE = 1000
-LR = 0.0001
 EPISODES = 10000
 
 model = 0
@@ -23,14 +22,14 @@ class Agent():
 		self.replay_stack = deque(maxlen = MAXMEM)
 		self.model = Linear_QNet(11,256,3)
 		self.game = SnakeGame()
-		self.eps = 0.0001 # learning rate
-		self.gamma = 0.99 # discount rate
+		self.eps = 0.001 # learning rate
+		self.gamma = 0.9 # discount rate
 		self.trainer = QTrainer(self.model, self.eps, self.gamma)
 
 		self.exploration_rate = 1
 		self.min_exploration_rate = 0.02
 		self.max_exploration_rate = 1
-		self.exploration_decay_rate = 0.01
+		self.exploration_decay_rate = 0.03
 	
 	def train(self):
 		total_frames = 0
