@@ -37,13 +37,6 @@ class Agent():
 			# reset game state 
 			done = False
 			self.game.reset()
-
-   			# every 1000 frames copy weights from policy to target models
-			if (total_frames % 1000)<200:
-				print('updating target network') 
-				self.trainer.target.load_state_dict(self.trainer.policy.state_dict())
-				
-			frame = 0
 			while done != True:
     			# get current state
 				curr_state = self.game.get_state() 
@@ -71,8 +64,13 @@ class Agent():
 				# train policy model with current step
 				self.trainer.train_step(curr_state, action, reward, new_state, done)
 				
-				frame+=1
-    
+				total_frames+=1
+          		
+            	# every 1000 frames copy weights from policy to target models
+				if total_frames % 1000 == 0:
+					print('updating target network') 
+					self.trainer.target.load_state_dict(self.trainer.policy.state_dict())
+		
 			if len(self.replay_stack) > BATCHSIZE:
 				# randomly sample from replay stack and train
 				batch = random.sample(self.replay_stack,BATCHSIZE)
@@ -80,7 +78,6 @@ class Agent():
 				self.trainer.train_step(curr_states, actions, rewards, new_states, dones)
 			
    			# print training statistics 
-			total_frames += frame
 			print('current episode:',episode,' total_frames:',total_frames, ' exploration rate:', self.exploration_rate, ' best score:',record,' avg score:',total_score/(episode+1))
     
 			# plot data
@@ -88,14 +85,15 @@ class Agent():
 			total_score += score
 			mean_score = total_score / (episode + 1)
 			plot_mean_scores.append(mean_score)
-			plot(plot_scores, plot_mean_scores)
+			# plot(plot_scores, plot_mean_scores)
 				
 			# decay exploration rate
 			self.exploration_rate = self.min_exploration_rate + (self.max_exploration_rate - self.min_exploration_rate)*np.exp(-(self.exploration_decay_rate*episode))
 			
 			# save policy model
 			if score>record:
-				record = score 
+				record = score
+				print("record broken - saving best model")
 				self.trainer.policy.save()
 
 if __name__ == '__main__':
