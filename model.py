@@ -8,6 +8,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 import os
 import copy
+torch.manual_seed(42)
 class Linear_QNet(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
         super().__init__()

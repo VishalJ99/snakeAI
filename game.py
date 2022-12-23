@@ -135,16 +135,18 @@ class SnakeGame:
 			self.score += 1
 			self._place_food()
 			self.reward = 10
-		elif self._is_collision(self.head) or self.frame > 100*len(self.snake):            
-			self.reward = -10
-			game_over = True
-			# return game over and score
-			return game_over, self.score, self.reward
+
 		else:
 			self.reward = 0
 			self.snake.pop()
 		
-  		# update ui and clock
+		if self._is_collision(self.head) or self.frame > 100*len(self.snake):            
+			self.reward = -10
+			game_over = True
+			# return game over and score
+			return game_over, self.score, self.reward
+  		
+    	# update ui and clock
 		self._update_ui()
 		self.clock.tick(SPEED)
 		self.frame+=1
