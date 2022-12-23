@@ -6,7 +6,7 @@ import pygame
 import random
 from enum import Enum
 from collections import namedtuple
-random.seed(1)
+random.seed(42)
 pygame.init()
 font = pygame.font.SysFont('arial', 25)
 

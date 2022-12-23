@@ -85,7 +85,7 @@ class Agent():
 			total_score += score
 			mean_score = total_score / (episode + 1)
 			plot_mean_scores.append(mean_score)
-			# plot(plot_scores, plot_mean_scores)
+			plot(plot_scores, plot_mean_scores)
 				
 			# decay exploration rate
 			self.exploration_rate = self.min_exploration_rate + (self.max_exploration_rate - self.min_exploration_rate)*np.exp(-(self.exploration_decay_rate*episode))
