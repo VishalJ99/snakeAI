@@ -1,8 +1,3 @@
-"""
-implement Dq learning training loop
-figure out at what stage in the training loop is exp replay populated
-"""
-
 from collections import deque 
 from game import SnakeGame
 import numpy as np
@@ -10,14 +5,13 @@ import random
 from model import Linear_QNet, QTrainer
 import torch
 from utils import plot
-# hyper params taken from ...
+import matplotlib.pyplot as plt
+
+random.seed(42)
 MAXMEM = 10000
 BATCHSIZE = 1000
-LR = 0.0001
 EPISODES = 10000
-import matplotlib.pyplot as plt
-from IPython import display
-model = 0
+
 class Agent():
 	def __init__(self):
 		self.replay_stack = deque(maxlen = MAXMEM)
@@ -28,29 +22,22 @@ class Agent():
 		self.trainer = QTrainer(self.model, self.eps, self.gamma)
 
 		self.exploration_rate = 1
+		self.exploration_decay_rate = 0.03
 		self.min_exploration_rate = 0.02
 		self.max_exploration_rate = 1
-		self.exploration_decay_rate = 0.03
 	
 	def train(self):
 		total_frames = 0
-		plot_scores = []
-		plot_mean_scores = []
 		total_score = 0
 		record = 0
-
-
-
+		plot_scores = []
+		plot_mean_scores = []
+  
 		for episode in range(EPISODES):
 			# reset game state 
 			done = False
 			self.game.reset()
-			
-   
-			if episode>0: 
-				total_frames += frame
-				print('current episode:',episode,' total_frames:',total_frames, ' exploration rate:', self.exploration_rate, ' best score:',record,' avg score:',total_score/episode)
-    
+
    			# every 1000 frames copy weights from policy to target models
 			if (total_frames % 1000)<200:
 				print('updating target network') 
@@ -64,12 +51,13 @@ class Agent():
 				# choose action
 				action = [0,0,0]
 				exploration_threshold = random.uniform(0,1)
+				
 				if exploration_threshold > self.exploration_rate:
-					# using model
+					# exploiting
 					curr_state_tensor = torch.tensor(curr_state, dtype=torch.float)
 					action_idx = torch.argmax(self.trainer.policy(torch.unsqueeze(curr_state_tensor, 0))).item()
 				else:
-					# randomly 
+					# exploring
 					action_idx = random.randint(0,2)
 				
 				action[action_idx] = 1 
@@ -79,15 +67,22 @@ class Agent():
 				new_state = self.game.get_state()
 				experience_tuple = (curr_state, action, reward, new_state, done)
 				self.replay_stack.appendleft(experience_tuple)
+				
+				# train policy model with current step
 				self.trainer.train_step(curr_state, action, reward, new_state, done)
+				
 				frame+=1
     
 			if len(self.replay_stack) > BATCHSIZE:
-				# randomly sample from replay stack
+				# randomly sample from replay stack and train
 				batch = random.sample(self.replay_stack,BATCHSIZE)
 				curr_states, actions, rewards, new_states, dones = zip(*batch)
 				self.trainer.train_step(curr_states, actions, rewards, new_states, dones)
-
+			
+   			# print training statistics 
+			total_frames += frame
+			print('current episode:',episode,' total_frames:',total_frames, ' exploration rate:', self.exploration_rate, ' best score:',record,' avg score:',total_score/(episode+1))
+    
 			# plot data
 			plot_scores.append(score)
 			total_score += score
@@ -97,21 +92,16 @@ class Agent():
 				
 			# decay exploration rate
 			self.exploration_rate = self.min_exploration_rate + (self.max_exploration_rate - self.min_exploration_rate)*np.exp(-(self.exploration_decay_rate*episode))
-
+			
+			# save policy model
 			if score>record:
 				record = score 
 				self.trainer.policy.save()
 
+if __name__ == '__main__':
+	plt.ion()
+	agent = Agent()
+	agent.train()
 
-
-
-
-plt.ion()
-agent = Agent()
-agent.train()
-
-# game = SnakeGame()
-# results_tuple = game.play_step([0,0,1])
-# print(results_tuple)
 
 

@@ -1,3 +1,7 @@
+"""_summary_
+Modified from
+https://github.com/patrickloeber/snake-ai-pytorch
+"""
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -29,16 +33,20 @@ class QTrainer:
         # init hyperparameters
         self.lr = lr
         self.gamma = gamma
-        self.policy = model
-        self.target = copy.deepcopy(self.policy)
         self.optimizer = optim.Adam(model.parameters(), lr=self.lr)
         self.criterion = nn.MSELoss()
+        
+        # init models
+        self.policy = model
+        self.target = copy.deepcopy(self.policy)
+
 
     def train_step(self, state, action, reward, next_state, done):
         state = torch.tensor(state, dtype=torch.float)
         next_state = torch.tensor(next_state, dtype=torch.float)
         action = torch.tensor(action, dtype=torch.long)
         reward = torch.tensor(reward, dtype=torch.float)
+        
         # (n, x)
         if len(state.shape) == 1:
             # (1, x)

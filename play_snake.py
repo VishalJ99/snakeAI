@@ -2,7 +2,10 @@ import pygame
 import random
 from enum import Enum
 from collections import namedtuple
-
+"""
+Modified from
+https://github.com/patrickloeber/snake-ai-pytorch
+"""
 pygame.init()
 font = pygame.font.SysFont('arial', 25)
 
